@@ -1,0 +1,31 @@
+Afk:
+  Enabled: true
+  MAX_AFK_TIME_MESSAGE: 30
+  NoLongerAfk: "%PLAYERDISP% is no longer AFK"
+  IsAfk: "%PLAYERDISP% is AFK"
+Kick:
+  Enabled: true
+  MAX_AFK_TIME_KICK: 90
+  KickReason: "%PLAYERDISP% was AFK for too long!"
+Logging:
+  MAX_LOGGED_LOCATIONS: 25
+  MAX_LOGGED_ACTIONS: 100
+  MAX_INTERACT: 98
+  MAX_INTERACT_ENTITY: 98
+  MAX_ITEM_HELD_CHANGE: 20
+  MAX_BED_LEAVE: 10
+  MAX_TOGGLE_SNEAK: 30
+  MAX_DROP_ITEM: 30
+  MAX_PICKUP_ITEM: 30
+  MAX_CHAT: 30
+  MAX_MOVE: 100
+  MESSAGE_BEFORE: Please do something else then
+  MESSAGE_INTERACT: interacting
+  MESSAGE_INTERACT_ENTITY: interacting with entities
+  MESSAGE_ITEM_HELD_CHANGE: changing your item in hand
+  MESSAGE_BED_LEAVE: leaving the bed
+  MESSAGE_TOGGLE_SNEAK: toggling sneak
+  MESSAGE_DROP_ITEM: dropping items
+  MESSAGE_PICKUP_ITEM: picking up items
+  MESSAGE_CHAT: chatting
+  MESSAGE_MOVE: moving in circles

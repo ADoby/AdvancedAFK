@@ -1,0 +1,25 @@
+name: Advanced AFK
+main: advancedafk.AdvancedAFK
+version: 1.1
+description: >
+             An AFK System
+commands:
+  afk:
+    description: Set yourself to AFK
+permissions:
+  advancedafk.*:
+    description: All Permissions except "lagging"
+  advancedafk.afk.self:
+    description: Set self to AFK
+    default: op
+  advancedafk.afk.other:
+    description: Set another player to AFK
+    default: op
+  advancedafk.lagging:
+    description: Lagging players get 2 times more time to react
+  advancedafk.exempt.afk:
+    description: Makes the user exempt from being set to AFK
+    default: op
+  advancedafk.exempt.kick
+    description: Makes the user exempt from being kicked
+    default: op
