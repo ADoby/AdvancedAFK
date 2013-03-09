@@ -83,10 +83,10 @@ public class AdvancedAFK extends JavaPlugin{
 	public Event_Listener pListener = new Event_Listener(functions);
 	
 	//A list which stores if a player is afk atm
-	static HashMap<Player, Boolean> afkList = new HashMap<Player, Boolean>();
+	public HashMap<Player, Boolean> afkList = new HashMap<Player, Boolean>();
 	
 	//A list which stores if a player is in Inventory
-	static List<Player> inInventory = new ArrayList<Player>();
+	public List<Player> inInventory = new ArrayList<Player>();
 	
 	//The plugin "onEnable" method, which is called when plugin loads
 	@Override
@@ -99,10 +99,14 @@ public class AdvancedAFK extends JavaPlugin{
 		 
 		 getServer().getPluginManager().registerEvents(this.pListener, this);
 		 
+		 //If you update your config, this applies changes to users config
+		 this.getConfig().options().copyDefaults(true);
+		 this.saveConfig();
+		 
 		 reload();
 	 }
 	
-	public static void setPlayerInInv(Player p, boolean b){
+	public void setPlayerInInv(Player p, boolean b){
 		if(b && !inInventory.contains(p)){
 			inInventory.add(p);
 		}else if(inInventory.contains(p)){
@@ -112,9 +116,6 @@ public class AdvancedAFK extends JavaPlugin{
 	
 	private void reload(){
 		//Save default configs entries
-		 //If you update your config, this applies changes to users config
-		 this.getConfig().options().copyDefaults(true);
-		 this.saveConfig();
 		 
 		 //Let the functions check this config for me
 		 log("Checking Config..");

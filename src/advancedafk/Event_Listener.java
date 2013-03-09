@@ -192,12 +192,12 @@ public class Event_Listener implements Listener{
 	
 	@EventHandler
 	public void onInventoryOpen(InventoryOpenEvent e){
-		AdvancedAFK.setPlayerInInv((Player)e.getPlayer(),true);
+		AdvancedAFK.plugin.setPlayerInInv((Player)e.getPlayer(),true);
 	}
 	
 	@EventHandler
 	public void onInventoryClose(InventoryCloseEvent e){
-		AdvancedAFK.setPlayerInInv((Player)e.getPlayer(),false);
+		AdvancedAFK.plugin.setPlayerInInv((Player)e.getPlayer(),false);
 	}
 	
 	@EventHandler

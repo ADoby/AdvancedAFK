@@ -1,11 +1,11 @@
 Afk:
   Enabled: true
-  MAX_AFK_TIME_MESSAGE: 60
+  MAX_AFK_TIME_MESSAGE: 120
   NoLongerAfk: "%PLAYERDISP% is no longer AFK"
   IsAfk: "%PLAYERDISP% is AFK"
 Kick:
   Enabled: true
-  MAX_AFK_TIME_KICK: 120
+  MAX_AFK_TIME_KICK: 300
   KickReason: "%PLAYERDISP% was AFK for too long!"
 Logging:
   MAX_LOGGED_LOCATIONS: 25

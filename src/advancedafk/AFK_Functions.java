@@ -29,17 +29,17 @@ public class AFK_Functions {
 	//This method sets/unsets a player to afk
 	public void afk(Player player, boolean set){
 		if(set){
-			AdvancedAFK.afkList.put(player, set);
+			AdvancedAFK.plugin.afkList.put(player, set);
 			AFK_Watcher.time.put(player, AdvancedAFK.MAX_AFK_TIME_MESSAGE * 20);
 			player.getServer().broadcastMessage(ChatColor.translateAlternateColorCodes('&', AdvancedAFK.plugin.getConfig().getString("Afk.IsAfk").replace("%PLAYERNAME%", player.getName()).replace("%PLAYERDISP%", player.getDisplayName())));
 		}else{
-			AdvancedAFK.afkList.remove(player);
+			AdvancedAFK.plugin.afkList.remove(player);
 			player.getServer().broadcastMessage(ChatColor.translateAlternateColorCodes('&', AdvancedAFK.plugin.getConfig().getString("Afk.NoLongerAfk").replace("%PLAYERNAME%", player.getName()).replace("%PLAYERDISP%", player.getDisplayName())));
 		}
 	}
 	
 	public static boolean isInInventory(Player p){
-		return AdvancedAFK.inInventory.contains(p);
+		return AdvancedAFK.plugin.inInventory.contains(p);
 	}
 	
 	//Checks config entries if they have correct format like Integers or Booleans
@@ -80,14 +80,14 @@ public class AFK_Functions {
 	//Kicks the player and resets all his Data
 	public void kick(Player p){
 		p.kickPlayer(ChatColor.translateAlternateColorCodes('&', AdvancedAFK.plugin.getConfig().getString("Kick.KickReason").replace("%PLAYERNAME%", p.getName()).replace("%PLAYERDISP%", p.getDisplayName())));
-		AdvancedAFK.afkList.remove(p);
+		AdvancedAFK.plugin.afkList.remove(p);
 		AFK_Watcher.time.remove(p);
 		p.getServer().broadcastMessage(ChatColor.translateAlternateColorCodes('&', AdvancedAFK.plugin.getConfig().getString("Kick.KickReason").replace("%PLAYERNAME%", p.getName()).replace("%PLAYERDISP%", p.getDisplayName())));
 	}
 	
 	//Returns if a player is afk or not
 	public static boolean isAfk(Player p){
-		if(AdvancedAFK.afkList.containsKey(p)){
+		if(AdvancedAFK.plugin.afkList.containsKey(p)){
 			return true;
 		}else{
 			return false;
