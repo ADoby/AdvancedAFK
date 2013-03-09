@@ -1,11 +1,11 @@
 Afk:
   Enabled: true
-  MAX_AFK_TIME_MESSAGE: 30
+  MAX_AFK_TIME_MESSAGE: 60
   NoLongerAfk: "%PLAYERDISP% is no longer AFK"
   IsAfk: "%PLAYERDISP% is AFK"
 Kick:
   Enabled: true
-  MAX_AFK_TIME_KICK: 90
+  MAX_AFK_TIME_KICK: 120
   KickReason: "%PLAYERDISP% was AFK for too long!"
 Logging:
   MAX_LOGGED_LOCATIONS: 25
@@ -19,6 +19,8 @@ Logging:
   MAX_PICKUP_ITEM: 30
   MAX_CHAT: 30
   MAX_MOVE: 100
+  MAX_INVENTORY_CLICK: 100
+  ENABLE_MESSAGES: false
   MESSAGE_BEFORE: Please do something else then
   MESSAGE_INTERACT: interacting
   MESSAGE_INTERACT_ENTITY: interacting with entities
@@ -29,3 +31,4 @@ Logging:
   MESSAGE_PICKUP_ITEM: picking up items
   MESSAGE_CHAT: chatting
   MESSAGE_MOVE: moving in circles
+  MESSAGE_INVENTORY_CLICK: clicking your inventory

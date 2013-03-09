@@ -1,6 +1,9 @@
 package advancedafk;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
+
 import me.edge209.afkTerminator.AfkDetect;
 
 import org.bukkit.Bukkit;
@@ -32,7 +35,8 @@ public class AdvancedAFK extends JavaPlugin{
 											"dropping items",
 											"picking up items",
 											"chatting",
-											"moving"};
+											"moving",
+											"clicking around in your inventory"};
 
 	//List of Booleans if checking/logging an action is enabled
 	//Can be set in config
@@ -44,6 +48,7 @@ public class AdvancedAFK extends JavaPlugin{
 											30,
 											30,
 											30,
+											100,
 											100};
 	
 	//Just some kind of "enum". Each action has his own integer
@@ -56,6 +61,7 @@ public class AdvancedAFK extends JavaPlugin{
 	public static final int ACTION_PICKUP_ITEM = 6;
 	public static final int ACTION_CHAT = 7;
 	public static final int ACTION_MOVE = 8;
+	public static final int ACTION_INVENTORY_CLICK = 8;
 	
 	//Default 
 	//Can be set in config
@@ -68,6 +74,8 @@ public class AdvancedAFK extends JavaPlugin{
 	public static boolean AFK_ENABLED = true;
 	public static boolean KICK_ENABLED = true;
 	
+	public static boolean ENABLE_MESSAGES = false;
+	
 	//End of Config Entries
 	
 
@@ -75,7 +83,10 @@ public class AdvancedAFK extends JavaPlugin{
 	public Event_Listener pListener = new Event_Listener(functions);
 	
 	//A list which stores if a player is afk atm
-	HashMap<Player, Boolean> afkList = new HashMap<Player, Boolean>();
+	static HashMap<Player, Boolean> afkList = new HashMap<Player, Boolean>();
+	
+	//A list which stores if a player is in Inventory
+	static List<Player> inInventory = new ArrayList<Player>();
 	
 	//The plugin "onEnable" method, which is called when plugin loads
 	@Override
@@ -88,7 +99,19 @@ public class AdvancedAFK extends JavaPlugin{
 		 
 		 getServer().getPluginManager().registerEvents(this.pListener, this);
 		 
-		 //Save default configs entries
+		 reload();
+	 }
+	
+	public static void setPlayerInInv(Player p, boolean b){
+		if(b && !inInventory.contains(p)){
+			inInventory.add(p);
+		}else if(inInventory.contains(p)){
+			inInventory.remove(p);
+		}
+	}
+	
+	private void reload(){
+		//Save default configs entries
 		 //If you update your config, this applies changes to users config
 		 this.getConfig().options().copyDefaults(true);
 		 this.saveConfig();
@@ -120,12 +143,15 @@ public class AdvancedAFK extends JavaPlugin{
 		 MAX_TIMES[ACTION_PICKUP_ITEM] = AdvancedAFK.plugin.getConfig().getInt("Logging.MAX_PICKUP_ITEM");
 		 MAX_TIMES[ACTION_CHAT] = AdvancedAFK.plugin.getConfig().getInt("Logging.MAX_CHAT");
 		 MAX_TIMES[ACTION_MOVE] = AdvancedAFK.plugin.getConfig().getInt("Logging.MAX_MOVE");
+		 MAX_TIMES[ACTION_INVENTORY_CLICK] = AdvancedAFK.plugin.getConfig().getInt("Logging.MAX_INVENTORY_CLICK");
 		 
 		 MAX_AFK_TIME_MESSAGE = AdvancedAFK.plugin.getConfig().getInt("Afk.MAX_AFK_TIME_MESSAGE");
 		 MAX_AFK_TIME_KICK = AdvancedAFK.plugin.getConfig().getInt("Kick.MAX_AFK_TIME_KICK");
 		 
 		 AFK_ENABLED = AdvancedAFK.plugin.getConfig().getBoolean("Afk.Enabled");
 		 KICK_ENABLED = AdvancedAFK.plugin.getConfig().getBoolean("Kick.Enabled");
+		 
+		 ENABLE_MESSAGES = AdvancedAFK.plugin.getConfig().getBoolean("Logging.ENABLE_MESSAGES");
 		 
 		 //Load Message
 		 MESSAGE_BEFORE = AdvancedAFK.plugin.getConfig().getString("Logging.MESSAGE_BEFORE") + " ";
@@ -140,6 +166,7 @@ public class AdvancedAFK extends JavaPlugin{
 		 messages[ACTION_PICKUP_ITEM] = AdvancedAFK.plugin.getConfig().getString("Logging.MESSAGE_PICKUP_ITEM");
 		 messages[ACTION_CHAT] = AdvancedAFK.plugin.getConfig().getString("Logging.MESSAGE_CHAT");
 		 messages[ACTION_MOVE] = AdvancedAFK.plugin.getConfig().getString("Logging.MESSAGE_MOVE");
+		 messages[ACTION_INVENTORY_CLICK] = AdvancedAFK.plugin.getConfig().getString("Logging.MESSAGE_INVENTORY_CLICK");
 		 
 		 //Lets look if AFK-Terminator is installed
 		 try{
@@ -153,7 +180,7 @@ public class AdvancedAFK extends JavaPlugin{
 			useAFKTerminator = false;
 			AdvancedAFK.log("AfkTerminator not installed, please install to get Anti-AFK-Machines");
 		 }
-	 }
+	}
 	
 	public static void log(String s){
 		Bukkit.getLogger().info("["+plugin.getName()+"] " + s);
@@ -165,15 +192,26 @@ public class AdvancedAFK extends JavaPlugin{
 		 Bukkit.getScheduler().cancelAllTasks();
 	 }
 	 
+	 
+	 
 	 //This method is called if a player/or console uses a command
 	 @Override
 	 public boolean onCommand(CommandSender sender, Command cmd, String commandLabel, String[] args){
+		 
 		 //If command is /afk
 		 if(commandLabel.equalsIgnoreCase("afk")){
 			 //If command executer if a Player
 			 if(sender instanceof Player){
 			 
 				if(args.length == 1){
+					if(args[0].equalsIgnoreCase("reload")){
+						if(((Player) sender).hasPermission("advancedafk.reload") || ((Player) sender).hasPermission("advancedafk.*")){
+							 log("Reloading Plugin");
+							 reload();
+						}
+					}
+
+					
 					//If he tries to afk another player
 					if(((Player) sender).hasPermission("advancedafk.afk.other") || ((Player) sender).hasPermission("advancedafk.*")){
 						for(Player p : getServer().getOnlinePlayers()){
@@ -212,6 +250,12 @@ public class AdvancedAFK extends JavaPlugin{
 			 
 				 	
 			 }else{
+				 if(args.length == 1){
+					 if( args[0].equalsIgnoreCase("reload")){
+						 log("Reloading Plugin");
+						 reload();
+					 }
+				 }
 				 log("This command must be used in game.");
 			 }
 		 }

@@ -8,6 +8,9 @@ import org.bukkit.Location;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
+import org.bukkit.event.inventory.InventoryClickEvent;
+import org.bukkit.event.inventory.InventoryCloseEvent;
+import org.bukkit.event.inventory.InventoryOpenEvent;
 import org.bukkit.event.player.AsyncPlayerChatEvent;
 import org.bukkit.event.player.PlayerBedLeaveEvent;
 import org.bukkit.event.player.PlayerDropItemEvent;
@@ -85,7 +88,7 @@ public class Event_Listener implements Listener{
 			if(actionCounts.get(p) > AdvancedAFK.MAX_TIMES[action]){
 				//He did this action more then "MAX" (see config) times he could be afk
 				actionCounts.put(p, 0);
-				if(AdvancedAFK.AFK_ENABLED){
+				if(AdvancedAFK.AFK_ENABLED && AdvancedAFK.ENABLE_MESSAGES){
 					p.sendMessage("[Advanced-AFK] " + AdvancedAFK.MESSAGE_BEFORE + AdvancedAFK.messages[action]);
 				}
 			}
@@ -166,7 +169,7 @@ public class Event_Listener implements Listener{
 				if(stepCounts.get(e.getPlayer()) >= AdvancedAFK.MAX_LOGGED_LOCATIONS){
 					//He may be afk, talk to the player :P
 					stepCounts.put(e.getPlayer(),0);
-					if(AdvancedAFK.AFK_ENABLED){
+					if(AdvancedAFK.AFK_ENABLED && AdvancedAFK.ENABLE_MESSAGES){
 						e.getPlayer().sendMessage("[Advanced-AFK] " + AdvancedAFK.MESSAGE_BEFORE + AdvancedAFK.messages[AdvancedAFK.ACTION_MOVE]);
 					}
 				}
@@ -184,7 +187,25 @@ public class Event_Listener implements Listener{
 	
 	@EventHandler
 	public void onPlayerChat(AsyncPlayerChatEvent e){
-		logAction(e.getPlayer(),AdvancedAFK.ACTION_CHAT);
+		logAction(e.getPlayer(),AdvancedAFK.ACTION_CHAT);		
+	}
+	
+	@EventHandler
+	public void onInventoryOpen(InventoryOpenEvent e){
+		AdvancedAFK.setPlayerInInv((Player)e.getPlayer(),true);
+	}
+	
+	@EventHandler
+	public void onInventoryClose(InventoryCloseEvent e){
+		AdvancedAFK.setPlayerInInv((Player)e.getPlayer(),false);
+	}
+	
+	@EventHandler
+	public void onInventoryClick(InventoryClickEvent e){
+		if(e.getWhoClicked() instanceof Player){
+			//Player clicked something in Inventory
+			logAction((Player)e.getWhoClicked(),AdvancedAFK.ACTION_INVENTORY_CLICK);
+		}
 	}
 	
 	@EventHandler
