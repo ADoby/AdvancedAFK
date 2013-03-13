@@ -1,8 +1,8 @@
 name: Advanced AFK
 main: advancedafk.AdvancedAFK
-version: 1.3
-description: >
-             An AFK System
+version: 1.4
+dev-url: http://http://dev.bukkit.org/server-mods/advanced-afk/
+description: Advanced AFK System with AFKTerminator
 commands:
   afk:
     description: Set yourself to AFK

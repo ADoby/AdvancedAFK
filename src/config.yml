@@ -1,6 +1,7 @@
 Afk:
   Enabled: true
   MAX_AFK_TIME_MESSAGE: 120
+  ENABLE_MESSAGE: false
   NoLongerAfk: "%PLAYERDISP% is no longer AFK"
   IsAfk: "%PLAYERDISP% is AFK"
 Kick:

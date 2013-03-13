@@ -1,16 +1,17 @@
 package advancedafk;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 
 import me.edge209.afkTerminator.AfkDetect;
+import net.milkbowl.vault.permission.Permission;
 
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
+import org.bukkit.plugin.RegisteredServiceProvider;
 import org.bukkit.plugin.java.JavaPlugin;
 
 
@@ -19,11 +20,14 @@ public class AdvancedAFK extends JavaPlugin{
 	//This Plugin
 	public static AdvancedAFK plugin;
 	
+	//Permission
+	public static IPermissionHandler permissions;
+	
 	//Boolean if AfkTerminator is installed
 	public static boolean useAFKTerminator = false;
 	
 	//Default Messages before beneath
-	public static String MESSAGE_BEFORE = "[Anti-AFK] Start doing something else then ";
+	public static String MESSAGE_BEFORE = "Start doing something else then ";
 	
 	//List of Messages which are send to player if hes going to be AFK
 	//Can be set in config
@@ -79,11 +83,11 @@ public class AdvancedAFK extends JavaPlugin{
 	//End of Config Entries
 	
 
-	public AFK_Functions functions = new AFK_Functions();
+	public AFK_API functions = new AFK_API(this);
 	public Event_Listener pListener = new Event_Listener(functions);
 	
 	//A list which stores if a player is afk atm
-	public HashMap<Player, Boolean> afkList = new HashMap<Player, Boolean>();
+	public List<Player> isAFK = new ArrayList<Player>();
 	
 	//A list which stores if a player is in Inventory
 	public List<Player> inInventory = new ArrayList<Player>();
@@ -93,10 +97,6 @@ public class AdvancedAFK extends JavaPlugin{
 	 public void onEnable() {
 		 plugin = this;
 		
-		 //Start AFK Watcher which adds +1 to afk-time every tick
-		 //Read AFK_Watcher comments
-		 Bukkit.getServer().getScheduler().runTaskLater(plugin, new AFK_Watcher(functions), 1);
-		 
 		 getServer().getPluginManager().registerEvents(this.pListener, this);
 		 
 		 //If you update your config, this applies changes to users config
@@ -104,6 +104,7 @@ public class AdvancedAFK extends JavaPlugin{
 		 this.saveConfig();
 		 
 		 reload();
+		
 	 }
 	
 	public void setPlayerInInv(Player p, boolean b){
@@ -115,6 +116,26 @@ public class AdvancedAFK extends JavaPlugin{
 	}
 	
 	private void reload(){
+		
+		//Try to hook vault
+		RegisteredServiceProvider<Permission> permissionsPlugin = null;  
+        
+        if (getServer().getPluginManager().isPluginEnabled("Vault"))
+        {
+            log("Vault detected. Using Vault.");
+            
+            permissionsPlugin = getServer().getServicesManager().getRegistration(net.milkbowl.vault.permission.Permission.class);
+        
+            permissions = (IPermissionHandler)new PermissionHandlerWrapper(permissionsPlugin.getProvider());
+        }
+        else 
+        {
+            log("Vault not detected for permissions, defaulting to Bukkit Permissions");
+            
+            permissions = (IPermissionHandler)new MockPermissionHandler();
+        }
+		
+		
 		//Save default configs entries
 		 
 		 //Let the functions check this config for me
@@ -181,6 +202,10 @@ public class AdvancedAFK extends JavaPlugin{
 			useAFKTerminator = false;
 			AdvancedAFK.log("AfkTerminator not installed, please install to get Anti-AFK-Machines");
 		 }
+		 
+		 //Start AFK Watcher which adds +1 to afk-time every tick
+		 //Read AFK_Watcher comments
+		 Bukkit.getServer().getScheduler().runTaskLater(plugin, new AFK_Watcher(functions), 1);
 	}
 	
 	public static void log(String s){
@@ -203,48 +228,50 @@ public class AdvancedAFK extends JavaPlugin{
 		 if(commandLabel.equalsIgnoreCase("afk")){
 			 //If command executer if a Player
 			 if(sender instanceof Player){
-			 
+				 Player player = (Player) sender;
 				if(args.length == 1){
 					if(args[0].equalsIgnoreCase("reload")){
-						if(((Player) sender).hasPermission("advancedafk.reload") || ((Player) sender).hasPermission("advancedafk.*")){
+						if(permissions.has(sender,"advancedafk.reload") || permissions.has(sender,"advancedafk.*")){
 							 log("Reloading Plugin");
+							 //Cancel our AFK_Watcher
+							 Bukkit.getScheduler().cancelAllTasks();
 							 reload();
 						}
 					}
 
 					
 					//If he tries to afk another player
-					if(((Player) sender).hasPermission("advancedafk.afk.other") || ((Player) sender).hasPermission("advancedafk.*")){
+					if(permissions.has(sender,"advancedafk.afk.other") || permissions.has(sender,"advancedafk.*")){
 						for(Player p : getServer().getOnlinePlayers()){
 							if(p.getName().contains(args[0]) || p.getDisplayName().contains(args[0])){
-								if(AFK_Functions.isAfk(p)){
-								 	((Player) sender).sendMessage(ChatColor.RED + p.getDisplayName() + " is already set to AFK.");
+								if(AFK_API.isAfk(p)){
+									player.sendMessage(ChatColor.RED + p.getDisplayName() + " is already set to AFK.");
 							 	}else{
-							 		if(!p.hasPermission("advancedafk.exempt.afk") || !p.hasPermission("advancedafk.*")){
-							 			functions.afk(p, true);
-							 			((Player) sender).sendMessage(ChatColor.YELLOW + p.getDisplayName() + ChatColor.GREEN + " set to AFK");
+							 		if(!permissions.has(sender,"advancedafk.exempt.afk") || !permissions.has(sender,"advancedafk.*")){
+							 			functions.setAfk(p, true);
+							 			player.sendMessage(ChatColor.YELLOW + p.getDisplayName() + ChatColor.GREEN + " set to AFK");
 							 		}else{
-							 			((Player) sender).sendMessage(ChatColor.YELLOW + p.getDisplayName() + ChatColor.RED + "Is exempt from SimpleAFK");
+							 			player.sendMessage(ChatColor.YELLOW + p.getDisplayName() + ChatColor.RED + "Is exempt from SimpleAFK");
 							 		}
 							 	}
 							}
 						}
 					}else{
-						((Player) sender).sendMessage(ChatColor.RED + "You don't have permission to do this.");
+						player.sendMessage(ChatColor.RED + "You don't have permission to do this.");
 					}
 				}else if(args.length > 1){
-					((Player) sender).sendMessage(ChatColor.RED + "Usage: /afk [player]");
+					player.sendMessage(ChatColor.RED + "Usage: /afk [player]");
 				}else{
 					//He wants to set himself to afk
-					if(!((Player) sender).hasPermission("advancedafk.exempt.afk") || !((Player) sender).hasPermission("advancedafk.*")){
-						if(((Player) sender).hasPermission("advancedafk.afk.self") || ((Player) sender).hasPermission("advancedafk.*")){
-							if(AFK_Functions.isAfk((Player) sender)){
-								((Player) sender).sendMessage(ChatColor.RED + "You are already set to AFK.");
+					if(!permissions.has(sender,"advancedafk.exempt.afk") || !permissions.has(sender,"advancedafk.*")){
+						if(permissions.has(sender,"advancedafk.afk.self") || permissions.has(sender,"advancedafk.*")){
+							if(AFK_API.isAfk(player)){
+								player.sendMessage(ChatColor.RED + "You are already set to AFK.");
 							}else{
-								functions.afk(((Player) sender), true);
+								functions.setAfk(player, true);
 							}
 						}else{
-							((Player) sender).sendMessage(ChatColor.RED + "You don't have permission to do this.");
+							player.sendMessage(ChatColor.RED + "You don't have permission to do this.");
 						}
 					}
 				}
@@ -254,6 +281,8 @@ public class AdvancedAFK extends JavaPlugin{
 				 if(args.length == 1){
 					 if( args[0].equalsIgnoreCase("reload")){
 						 log("Reloading Plugin");
+						 //Cancel our AFK_Watcher
+						 Bukkit.getScheduler().cancelAllTasks();
 						 reload();
 					 }
 				 }

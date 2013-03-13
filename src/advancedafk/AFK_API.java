@@ -4,7 +4,9 @@ import org.bukkit.ChatColor;
 //import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.entity.Player;
 
-public class AFK_Functions {
+public class AFK_API {
+	
+	private AdvancedAFK owner;
 	
 	//Two variables which store the Strings of config entries which have to been checked
 	//if they are correct format
@@ -26,20 +28,24 @@ public class AFK_Functions {
 	String[] isBool = {"Afk.Enabled",
 			"Kick.Enabled"};
 	
-	//This method sets/unsets a player to afk
-	public void afk(Player player, boolean set){
-		if(set){
-			AdvancedAFK.plugin.afkList.put(player, set);
-			AFK_Watcher.time.put(player, AdvancedAFK.MAX_AFK_TIME_MESSAGE * 20);
-			player.getServer().broadcastMessage(ChatColor.translateAlternateColorCodes('&', AdvancedAFK.plugin.getConfig().getString("Afk.IsAfk").replace("%PLAYERNAME%", player.getName()).replace("%PLAYERDISP%", player.getDisplayName())));
-		}else{
-			AdvancedAFK.plugin.afkList.remove(player);
-			player.getServer().broadcastMessage(ChatColor.translateAlternateColorCodes('&', AdvancedAFK.plugin.getConfig().getString("Afk.NoLongerAfk").replace("%PLAYERNAME%", player.getName()).replace("%PLAYERDISP%", player.getDisplayName())));
-		}
+	public AFK_API(AdvancedAFK owner){
+		this.owner = owner;
 	}
 	
-	public static boolean isInInventory(Player p){
-		return AdvancedAFK.plugin.inInventory.contains(p);
+	//This method sets/unsets a player to afk
+	public void setAfk(Player player, boolean set){
+		if(set){
+			owner.isAFK.add(player);
+			AFK_Watcher.time.put(player, AdvancedAFK.MAX_AFK_TIME_MESSAGE * 20);
+			if(AdvancedAFK.plugin.getConfig().getBoolean("Afk.ENABLE_MESSAGE")){
+				player.getServer().broadcastMessage(ChatColor.translateAlternateColorCodes('&', AdvancedAFK.plugin.getConfig().getString("Afk.IsAfk").replace("%PLAYERNAME%", player.getName()).replace("%PLAYERDISP%", player.getDisplayName())));
+			}
+		}else{
+			owner.isAFK.remove(player);
+			if(AdvancedAFK.plugin.getConfig().getBoolean("Afk.ENABLE_MESSAGE")){
+				player.getServer().broadcastMessage(ChatColor.translateAlternateColorCodes('&', AdvancedAFK.plugin.getConfig().getString("Afk.NoLongerAfk").replace("%PLAYERNAME%", player.getName()).replace("%PLAYERDISP%", player.getDisplayName())));
+			}
+		}
 	}
 	
 	//Checks config entries if they have correct format like Integers or Booleans
@@ -77,28 +83,32 @@ public class AFK_Functions {
 		}
 	}
 	
-	//Kicks the player and resets all his Data
+	//Kicks the player and resets his loggs etc.
 	public void kick(Player p){
 		p.kickPlayer(ChatColor.translateAlternateColorCodes('&', AdvancedAFK.plugin.getConfig().getString("Kick.KickReason").replace("%PLAYERNAME%", p.getName()).replace("%PLAYERDISP%", p.getDisplayName())));
-		AdvancedAFK.plugin.afkList.remove(p);
+		owner.isAFK.remove(p);
 		AFK_Watcher.time.remove(p);
-		p.getServer().broadcastMessage(ChatColor.translateAlternateColorCodes('&', AdvancedAFK.plugin.getConfig().getString("Kick.KickReason").replace("%PLAYERNAME%", p.getName()).replace("%PLAYERDISP%", p.getDisplayName())));
+		if(AdvancedAFK.plugin.getConfig().getBoolean("Afk.ENABLE_MESSAGE")){
+			p.getServer().broadcastMessage(ChatColor.translateAlternateColorCodes('&', AdvancedAFK.plugin.getConfig().getString("Kick.KickReason").replace("%PLAYERNAME%", p.getName()).replace("%PLAYERDISP%", p.getDisplayName())));
+		}
 	}
 	
-	//Returns if a player is afk or not
+	//Returns if a player is in a inventory atm
+	public static boolean isInInventory(Player p){
+		return AdvancedAFK.plugin.inInventory.contains(p);
+	}
+	
+	//Returns if a player is afk atm
 	public static boolean isAfk(Player p){
-		if(AdvancedAFK.plugin.afkList.containsKey(p)){
+		if(AdvancedAFK.plugin.isAFK.contains(p)){
 			return true;
 		}else{
 			return false;
 		}
 	}
-	 
-	public void NoLongerAfk(Player p){
-		p.getServer().broadcastMessage(ChatColor.translateAlternateColorCodes('&', AdvancedAFK.plugin.getConfig().getString("Afk.NoLongerAfk").replace("%PLAYERNAME%", p.getName()).replace("%PLAYERDISP%", p.getDisplayName())));
-	}
-	 
      
+	//Test method to try if plugin is installed, If you wanna use this
+	//Same effect: getServer().getPluginManager().isPluginEnabled("Advanced AFK")
 	public static boolean isInstalled(){
 		return true;
 	}

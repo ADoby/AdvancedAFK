@@ -26,7 +26,7 @@ import org.bukkit.event.player.PlayerToggleSneakEvent;
 
 public class Event_Listener implements Listener{
 
-	public AFK_Functions functions;
+	public AFK_API functions;
 	
 	static HashMap<Player, List<Location>> lastLocations = new HashMap<Player, List<Location>>();
 	static HashMap<Player,Integer> lastAction = new HashMap<Player,Integer>();
@@ -34,7 +34,7 @@ public class Event_Listener implements Listener{
 	static HashMap<Player,Integer> actionCounts = new HashMap<Player, Integer>();
 	static HashMap<Player,Location> lastLocation = new HashMap<Player, Location>();
 	
-	public Event_Listener(AFK_Functions functions){
+	public Event_Listener(AFK_API functions){
 		this.functions = functions;
 	}
 	
@@ -67,9 +67,9 @@ public class Event_Listener implements Listener{
 				
 			//Set his afk-time to 0
 			AFK_Watcher.time.put(p, 0);
-			if(AFK_Functions.isAfk(p)){
+			if(AFK_API.isAfk(p)){
 				//If hes afk, set him to NOT afk
-				functions.afk(p, false);
+				functions.setAfk(p, false);
 			}
 			
 			//Set his actionCounter to 0 because he did this action the first time
@@ -154,8 +154,8 @@ public class Event_Listener implements Listener{
 				
 				//This location has not been logged yet = hes NOT AFK
 				AFK_Watcher.time.put(e.getPlayer(), 0);
-				if(AFK_Functions.isAfk(e.getPlayer())){
-					functions.afk(e.getPlayer(), false);
+				if(AFK_API.isAfk(e.getPlayer())){
+					functions.setAfk(e.getPlayer(), false);
 				}
 				
 				//Set his stepCount to 0
