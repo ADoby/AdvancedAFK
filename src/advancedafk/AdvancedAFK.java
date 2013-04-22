@@ -3,7 +3,6 @@ package advancedafk;
 import java.util.ArrayList;
 import java.util.List;
 
-import me.edge209.afkTerminator.AfkDetect;
 import net.milkbowl.vault.permission.Permission;
 
 import org.bukkit.Bukkit;
@@ -115,26 +114,34 @@ public class AdvancedAFK extends JavaPlugin{
 		}
 	}
 	
-	private void reload(){
-		
+	public void loadPluginConnection(){
 		//Try to hook vault
 		RegisteredServiceProvider<Permission> permissionsPlugin = null;  
-        
-        if (getServer().getPluginManager().isPluginEnabled("Vault"))
-        {
-            log("Vault detected. Using Vault.");
-            
-            permissionsPlugin = getServer().getServicesManager().getRegistration(net.milkbowl.vault.permission.Permission.class);
-        
-            permissions = (IPermissionHandler)new PermissionHandlerWrapper(permissionsPlugin.getProvider());
-        }
-        else 
-        {
-            log("Vault not detected for permissions, defaulting to Bukkit Permissions");
-            
-            permissions = (IPermissionHandler)new MockPermissionHandler();
-        }
+		        
+		if (getServer().getPluginManager().isPluginEnabled("Vault")){
+			log("Vault detected. hooked.");
+		            
+			permissionsPlugin = getServer().getServicesManager().getRegistration(net.milkbowl.vault.permission.Permission.class);
+		        
+			permissions = (IPermissionHandler)new PermissionHandlerWrapper(permissionsPlugin.getProvider());
+		}else{
+			log("Vault not detected for permissions, defaulting to Bukkit Permissions");      
+			permissions = (IPermissionHandler)new MockPermissionHandler();
+		}
+		        
+		//Lets look if AFK-Terminator is installed
+		if (getServer().getPluginManager().isPluginEnabled("afkTerminator")){
+			useAFKTerminator = true;
+			log("AfkTerminator detected, hooked.");
+		}else{
+			useAFKTerminator = false;
+			log("AfkTerminator not detected, AFKMachine detection disabled.");
+		}
+	}
+	
+	private void reload(){
 		
+		loadPluginConnection();
 		
 		//Save default configs entries
 		 
@@ -190,18 +197,6 @@ public class AdvancedAFK extends JavaPlugin{
 		 messages[ACTION_MOVE] = AdvancedAFK.plugin.getConfig().getString("Logging.MESSAGE_MOVE");
 		 messages[ACTION_INVENTORY_CLICK] = AdvancedAFK.plugin.getConfig().getString("Logging.MESSAGE_INVENTORY_CLICK");
 		 
-		 //Lets look if AFK-Terminator is installed
-		 try{
-			AfkDetect.getAFKMachineStartTime("");
-			useAFKTerminator = true;
-			AdvancedAFK.log("AfkTerminator is installed, hooked");
-		 }catch(NoClassDefFoundError NCDE){
-			useAFKTerminator = false;
-			AdvancedAFK.log("AfkTerminator not installed, please install to get Anti-AFK-Machines");
-		 }catch(NullPointerException NPE){
-			useAFKTerminator = false;
-			AdvancedAFK.log("AfkTerminator not installed, please install to get Anti-AFK-Machines");
-		 }
 		 
 		 //Start AFK Watcher which adds +1 to afk-time every tick
 		 //Read AFK_Watcher comments
@@ -230,6 +225,13 @@ public class AdvancedAFK extends JavaPlugin{
 			 if(sender instanceof Player){
 				 Player player = (Player) sender;
 				if(args.length == 1){
+					if(args[0].equalsIgnoreCase("hooks")){
+						if(permissions.has(sender,"advancedafk.reload") || permissions.has(sender,"advancedafk.*")){
+							log("Reloading Connection");
+							loadPluginConnection();
+						}
+					}
+
 					if(args[0].equalsIgnoreCase("reload")){
 						if(permissions.has(sender,"advancedafk.reload") || permissions.has(sender,"advancedafk.*")){
 							 log("Reloading Plugin");
@@ -279,14 +281,20 @@ public class AdvancedAFK extends JavaPlugin{
 				 	
 			 }else{
 				 if(args.length == 1){
-					 if( args[0].equalsIgnoreCase("reload")){
-						 log("Reloading Plugin");
-						 //Cancel our AFK_Watcher
-						 Bukkit.getScheduler().cancelAllTasks();
-						 reload();
-					 }
+					if(args[0].equalsIgnoreCase("hooks")){
+						log("Reloading Connection");
+						loadPluginConnection();
+					}else if( args[0].equalsIgnoreCase("reload")){
+						log("Reloading Plugin");
+						//Cancel our AFK_Watcher
+						Bukkit.getScheduler().cancelAllTasks();
+						reload();
+					}else{
+						log("This command must be used in game.");
+					}
+				 }else{
+					 log("This command must be used in game.");
 				 }
-				 log("This command must be used in game.");
 			 }
 		 }
 		 return true;

@@ -12,12 +12,24 @@ public class AFK_Watcher implements Runnable{
 	static HashMap<Player, Integer> time = new HashMap<Player, Integer>();
 	public AFK_API functions;
 	
+	private int hookTimer = 0;
+	private boolean loaded = false;
+	
 	public AFK_Watcher(AFK_API functions){
 		this.functions = functions;
 	}
 	
 	@Override
 	public void run() {
+		if(!loaded){
+			hookTimer ++;
+			if(hookTimer > 20){
+				functions.owner.loadPluginConnection();
+				loaded = true;
+			}
+		}
+
+		
 		for(Player p : time.keySet()){
 			if(!AdvancedAFK.permissions.has(p,"advancedafk.*")){
 				int doubleIt = 1;
@@ -31,16 +43,13 @@ public class AFK_Watcher implements Runnable{
 					}else if(!AdvancedAFK.permissions.has(p,"advancedafk.exempt.kick") && time.get(p) == AdvancedAFK.MAX_AFK_TIME_KICK * 20*doubleIt && AdvancedAFK.KICK_ENABLED){
 						functions.kick(p);
 					}else{
-						if(AdvancedAFK.useAFKTerminator){
-							if(!AdvancedAFK.permissions.has(p,"advancedafk.exempt.afk") && getAFKMachineStartTime(p.getName()) >= AdvancedAFK.MAX_AFK_TIME_MESSAGE * 20*doubleIt && AdvancedAFK.AFK_ENABLED){
-								//He is AFK
-								functions.setAfk(p, true);
-							}else if(!AdvancedAFK.permissions.has(p,"advancedafk.exempt.kick") && getAFKMachineStartTime(p.getName()) >= AdvancedAFK.MAX_AFK_TIME_KICK * 20*doubleIt && AdvancedAFK.KICK_ENABLED){
-								//Hes to long AFK
-								functions.kick(p);
-							}
+						if(!AdvancedAFK.permissions.has(p,"advancedafk.exempt.afk") && getAFKMachineStartTime(p.getName()) >= AdvancedAFK.MAX_AFK_TIME_MESSAGE * 20*doubleIt && AdvancedAFK.AFK_ENABLED){
+							//He is AFK
+							functions.setAfk(p, true);
+						}else if(!AdvancedAFK.permissions.has(p,"advancedafk.exempt.kick") && getAFKMachineStartTime(p.getName()) >= AdvancedAFK.MAX_AFK_TIME_KICK * 20*doubleIt && AdvancedAFK.KICK_ENABLED){
+							//Hes to long AFK
+							functions.kick(p);
 						}
-
 					}
 				}catch (Exception e){
 					AdvancedAFK.log("[AdvancedAFK] Error in Watcher");
@@ -57,6 +66,8 @@ public class AFK_Watcher implements Runnable{
 		try{
 			return(AfkDetect.getAFKMachineStartTime(playerName));
 		}catch(NoClassDefFoundError NCDE){
+			return 0;
+		}catch(NullPointerException NPE){
 			return 0;
 		}
 

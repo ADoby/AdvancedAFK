@@ -6,7 +6,7 @@ import org.bukkit.entity.Player;
 
 public class AFK_API {
 	
-	private AdvancedAFK owner;
+	public AdvancedAFK owner;
 	
 	//Two variables which store the Strings of config entries which have to been checked
 	//if they are correct format
