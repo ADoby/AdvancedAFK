@@ -201,6 +201,8 @@ public class AdvancedAFK extends JavaPlugin{
 		 //Start AFK Watcher which adds +1 to afk-time every tick
 		 //Read AFK_Watcher comments
 		 Bukkit.getServer().getScheduler().runTaskLater(plugin, new AFK_Watcher(functions), 1);
+		 
+		 pListener.findAllPlayer();
 	}
 	
 	public static void log(String s){
@@ -211,6 +213,7 @@ public class AdvancedAFK extends JavaPlugin{
 	 public void onDisable(){
 		 //Cancel our AFK_Watcher
 		 Bukkit.getScheduler().cancelAllTasks();
+		 pListener.deleteAllConnections();
 	 }
 	 
 	 

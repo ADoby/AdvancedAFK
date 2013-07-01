@@ -20,6 +20,11 @@ public class AFK_Watcher implements Runnable{
 		this.functions = functions;
 	}
 	
+	public static void reload(){
+		
+		time = new HashMap<Player, Integer>();
+	}
+	
 	@Override
 	public void run() {
 		if(!loaded){

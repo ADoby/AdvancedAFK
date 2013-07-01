@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
+import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
@@ -36,6 +37,32 @@ public class Event_Listener implements Listener{
 	
 	public Event_Listener(AFK_API functions){
 		this.functions = functions;
+	}
+	
+	public void deleteAllConnections(){
+		lastLocations = new HashMap<Player, List<Location>>();
+		lastAction = new HashMap<Player,Integer>();
+		stepCounts = new HashMap<Player, Integer>();
+		actionCounts = new HashMap<Player, Integer>();
+		lastLocation = new HashMap<Player, Location>();
+		AFK_Watcher.reload();
+	}
+	
+	public void findAllPlayer(){
+		Player[] onlinePlayerList = Bukkit.getServer().getOnlinePlayers();
+		for(Player player : onlinePlayerList){
+			doSomething(player);
+		}
+	}
+		
+	public void doSomething(Player player){
+		
+		AFK_Watcher.time.put(player, 0);
+		lastLocations.put(player,new ArrayList<Location>());
+		stepCounts.put(player,0);
+		lastAction.put(player,0);
+		actionCounts.put(player,0);
+		lastLocation.put(player,player.getLocation());
 	}
 	
 	//#############################
@@ -137,6 +164,14 @@ public class Event_Listener implements Listener{
 	@EventHandler
 	public void onPlayerMove(PlayerMoveEvent e){		
 
+		if(e == null){
+			Bukkit.getLogger().info("Event Null");
+			return;
+		}
+		if(e.getPlayer() == null){
+			Bukkit.getLogger().info("Player Null");
+			return;
+		}
 		//Get Block Location beneath player
 		Location blockLoc = e.getPlayer().getLocation().getBlock().getLocation();
 		
