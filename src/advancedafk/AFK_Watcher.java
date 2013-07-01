@@ -1,6 +1,7 @@
 package advancedafk;
 
 import java.util.HashMap;
+import java.util.HashSet;
 
 import me.edge209.afkTerminator.AfkDetect;
 
@@ -29,8 +30,9 @@ public class AFK_Watcher implements Runnable{
 			}
 		}
 
-		
-		for(Player p : time.keySet()){
+		HashSet<Player> h = new HashSet<Player>();
+		h.addAll(time.keySet());
+		for(Player p : h){
 			if(!AdvancedAFK.permissions.has(p,"advancedafk.*")){
 				int doubleIt = 1;
 				if(AdvancedAFK.permissions.has(p,"advancedafk.lagging")){
