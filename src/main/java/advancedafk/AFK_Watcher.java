@@ -10,7 +10,7 @@ import org.bukkit.entity.Player;
 
 public class AFK_Watcher implements Runnable{
 	
-	static HashMap<Player, Integer> time = new HashMap<Player, Integer>();
+	public static HashMap<Player, Integer> time = new HashMap<Player, Integer>();
 	public AFK_API functions;
 	
 	private int hookTimer = 0;

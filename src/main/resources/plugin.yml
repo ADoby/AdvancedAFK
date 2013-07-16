@@ -1,4 +1,4 @@
-name: Advanced AFK
+name: AdvancedAFK
 main: advancedafk.AdvancedAFK
 version: ${project.version}
 dev-url: http://http://dev.bukkit.org/server-mods/advanced-afk/

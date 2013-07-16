@@ -124,14 +124,7 @@ public class Event_Listener implements Listener{
 	
 	@EventHandler
 	public void onPlayerJoin(PlayerJoinEvent e){
-		//If player joining the server set default entries and add Lists to Maps
-		//If you do not do this, you will get null-pointer or it just won't work
-		AFK_Watcher.time.put(e.getPlayer(), 0);
-		lastLocations.put(e.getPlayer(),new ArrayList<Location>());
-		stepCounts.put(e.getPlayer(),0);
-		lastAction.put(e.getPlayer(),0);
-		actionCounts.put(e.getPlayer(),0);
-		lastLocation.put(e.getPlayer(),e.getPlayer().getLocation());
+        AdvancedAFK.handleLogin(e.getPlayer());
 	}
 	
 	@EventHandler

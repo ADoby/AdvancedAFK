@@ -7,6 +7,7 @@ import net.milkbowl.vault.permission.Permission;
 
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
+import org.bukkit.Location;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
@@ -102,9 +103,23 @@ public class AdvancedAFK extends JavaPlugin{
 		 this.getConfig().options().copyDefaults(true);
 		 this.saveConfig();
 		 
+		 for (Player p : getServer().getOnlinePlayers()) {
+		     handleLogin(p);
+		 }
 		 reload();
 		
 	 }
+    
+    public static void handleLogin(Player p) {
+        //If player joining the server set default entries and add Lists to Maps
+        //If you do not do this, you will get null-pointer or it just won't work
+        AFK_Watcher.time.put(p, 0);
+        Event_Listener.lastLocations.put(p,new ArrayList<Location>());
+        Event_Listener.stepCounts.put(p,0);
+        Event_Listener.lastAction.put(p,0);
+        Event_Listener.actionCounts.put(p,0);
+        Event_Listener.lastLocation.put(p,p.getLocation());
+    }
 	
 	public void setPlayerInInv(Player p, boolean b){
 		if(b && !inInventory.contains(p)){
