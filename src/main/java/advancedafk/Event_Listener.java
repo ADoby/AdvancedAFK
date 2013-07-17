@@ -1,8 +1,6 @@
 package advancedafk;
 
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
@@ -10,8 +8,6 @@ import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.inventory.InventoryClickEvent;
-import org.bukkit.event.inventory.InventoryCloseEvent;
-import org.bukkit.event.inventory.InventoryOpenEvent;
 import org.bukkit.event.player.AsyncPlayerChatEvent;
 import org.bukkit.event.player.PlayerBedLeaveEvent;
 import org.bukkit.event.player.PlayerDropItemEvent;
@@ -29,50 +25,11 @@ public class Event_Listener implements Listener{
 
 	public AFK_API functions;
 	
-	static HashMap<Player, List<Location>> lastLocations = new HashMap<Player, List<Location>>();
-	static HashMap<Player,Integer> lastAction = new HashMap<Player,Integer>();
-	static HashMap<Player,Integer> stepCounts = new HashMap<Player, Integer>();
-	static HashMap<Player,Integer> actionCounts = new HashMap<Player, Integer>();
-	static HashMap<Player,Location> lastLocation = new HashMap<Player, Location>();
+	public static HashMap<Player, PlayerData> playerData = new HashMap<Player, PlayerData>();
 	
 	public Event_Listener(AFK_API functions){
 		this.functions = functions;
 	}
-	
-	public void deleteAllConnections(){
-		lastLocations = new HashMap<Player, List<Location>>();
-		lastAction = new HashMap<Player,Integer>();
-		stepCounts = new HashMap<Player, Integer>();
-		actionCounts = new HashMap<Player, Integer>();
-		lastLocation = new HashMap<Player, Location>();
-		AFK_Watcher.reload();
-	}
-	
-	public void findAllPlayer(){
-		Player[] onlinePlayerList = Bukkit.getServer().getOnlinePlayers();
-		for(Player player : onlinePlayerList){
-			doSomething(player);
-		}
-	}
-		
-	public void doSomething(Player player){
-		
-		AFK_Watcher.time.put(player, 0);
-		lastLocations.put(player,new ArrayList<Location>());
-		stepCounts.put(player,0);
-		lastAction.put(player,0);
-		actionCounts.put(player,0);
-		lastLocation.put(player,player.getLocation());
-	}
-	
-	//#############################
-	//Variable Description
-	//AFK_Watcher.time.get(Player): The time the player did not do anything/something different, his afk-time
-	//lastLocations.get(Player): The last locations/blocks the player walked by
-	//lastAction.get(Player): The last action the player did (Like chatting, interacting, building etc.)
-	//stepCounts.get(Player): How many times the player walks over the same locations
-	//lastLocation.get(Player): The last location the player was
-	//#############################
 	
 	//#############################################################
 	//If an action is performed this method is called
@@ -85,36 +42,38 @@ public class Event_Listener implements Listener{
 			return;
 		}
 		
+		PlayerData data = playerData.get(p);
+		
 		//Not complicated logging means if a player does something new hes NOT AFK
 		//so if lastAction is not this action, hes not afk
 		//But if he does one action more then "MAX" (see config) times, he IS AFK
-		if(lastAction.get(p) != action){
+		if (data.getLastAction() != action){
 			//Hes not AFK, different action
-			lastAction.put(p, action);
+			data.setLastAction(action);
 				
 			//Set his afk-time to 0
-			AFK_Watcher.time.put(p, 0);
-			if(AFK_API.isAfk(p)){
+			data.setTime(0);
+			if(data.isAfk()){
 				//If hes afk, set him to NOT afk
-				functions.setAfk(p, false);
+				functions.setAfk(data, false);
 			}
 			
 			//Set his actionCounter to 0 because he did this action the first time
-			actionCounts.put(p, 0);
+			data.setActionCounts(0);
 		}else{
 			//He is doing this action more then 1 time now
 			
 			//actionCount can not be higher then MAX_LOGGED_ACTIONS
 			//This makes it possible to let an Event reset the AFK-Time but not be counted as AFK-Action
 			//e.g. MOVING around
-			if(actionCounts.get(p) < AdvancedAFK.MAX_LOGGED_ACTIONS){
+			if(data.getActionCounts() < AdvancedAFK.MAX_LOGGED_ACTIONS){
 				//count times he is doing this action without doing something else
-				actionCounts.put(p, actionCounts.get(p)+1);
+			    data.setActionCounts(data.getActionCounts() + 1);
 			}
 		
-			if(actionCounts.get(p) > AdvancedAFK.MAX_TIMES[action]){
+			if(data.getActionCounts() > AdvancedAFK.MAX_TIMES[action]){
 				//He did this action more then "MAX" (see config) times he could be afk
-				actionCounts.put(p, 0);
+			    data.setActionCounts(0);
 				if(AdvancedAFK.AFK_ENABLED && AdvancedAFK.ENABLE_MESSAGES){
 					p.sendMessage("[Advanced-AFK] " + AdvancedAFK.MESSAGE_BEFORE + AdvancedAFK.messages[action]);
 				}
@@ -123,30 +82,20 @@ public class Event_Listener implements Listener{
 	}
 	
 	@EventHandler
-	public void onPlayerJoin(PlayerJoinEvent e){
+	public void onPlayerJoin(PlayerJoinEvent e) {
         AdvancedAFK.handleLogin(e.getPlayer());
 	}
 	
 	@EventHandler
 	public void onPlayerLeave(PlayerQuitEvent e){
 		//If player leaves server delete him from lists
-		AFK_Watcher.time.remove(e.getPlayer());
-		lastLocations.remove(e.getPlayer());
-		stepCounts.remove(e.getPlayer());
-		lastAction.remove(e.getPlayer());
-		actionCounts.remove(e.getPlayer());
-		lastLocation.remove(e.getPlayer());
+        playerData.remove(e.getPlayer());
 	}
 	
 	@EventHandler
-	public void onPlayerLeave2(PlayerKickEvent e){
+	public void onPlayerKick(PlayerKickEvent e){
 		//Seems like this could be if player leaves because of kick or something
-		AFK_Watcher.time.remove(e.getPlayer());
-		lastLocations.remove(e.getPlayer());
-		stepCounts.remove(e.getPlayer());
-		lastAction.remove(e.getPlayer());
-		actionCounts.remove(e.getPlayer());
-		lastLocation.remove(e.getPlayer());
+        playerData.remove(e.getPlayer());
 	}
 	
 	//#############################################################################
@@ -165,47 +114,43 @@ public class Event_Listener implements Listener{
 			Bukkit.getLogger().info("Player Null");
 			return;
 		}
+        
+        PlayerData data = playerData.get(e.getPlayer());
 		//Get Block Location beneath player
 		Location blockLoc = e.getPlayer().getLocation().getBlock().getLocation();
 		
-		if(!lastLocation.get(e.getPlayer()).equals(blockLoc)){
+		if(!data.getLastLocation().equals(blockLoc)){
 			//Its another location then the last time checking
-			lastLocation.put(e.getPlayer(), blockLoc);
+		    data.setLastLocation(blockLoc);
 			//new last Location
 
 			//If this location has not been logged yet save it
-			if(!lastLocations.get(e.getPlayer()).contains(blockLoc)){
-				lastLocations.get(e.getPlayer()).add(blockLoc);
+			if (!data.touchLastLocations(blockLoc)) {
+				data.addLastLocations(blockLoc);
 				
 				//Log action, hes moving :P
 				logAction(e.getPlayer(),AdvancedAFK.ACTION_MOVE);
 				
 				//This location has not been logged yet = hes NOT AFK
-				AFK_Watcher.time.put(e.getPlayer(), 0);
-				if(AFK_API.isAfk(e.getPlayer())){
-					functions.setAfk(e.getPlayer(), false);
+				data.setTime(0);
+				if(data.isAfk()){
+					functions.setAfk(data, false);
 				}
 				
 				//Set his stepCount to 0
-				stepCounts.put(e.getPlayer(),0);
-			}else{
+				data.setStepCounts(0);
+			} else {
 				//Player did walk over this block in the last "MAX_LOGGED_LOCATIONS"
 				//but this could be false alarm, because hey, you do walk over the same blocks some times, don't you :D
 				//So set his stepCount +1, if he now walks "MAX_LOGGED_LOCATIONS"-times over the same blocks again, hes probably afk
-				stepCounts.put(e.getPlayer(),stepCounts.get(e.getPlayer())+1);
-				
-				if(stepCounts.get(e.getPlayer()) >= AdvancedAFK.MAX_LOGGED_LOCATIONS){
+				data.setStepCounts(data.getStepCounts() + 1);
+				if(data.getStepCounts() >= AdvancedAFK.MAX_LOGGED_LOCATIONS){
 					//He may be afk, talk to the player :P
-					stepCounts.put(e.getPlayer(),0);
+				    data.setStepCounts(0);
 					if(AdvancedAFK.AFK_ENABLED && AdvancedAFK.ENABLE_MESSAGES){
 						e.getPlayer().sendMessage("[Advanced-AFK] " + AdvancedAFK.MESSAGE_BEFORE + AdvancedAFK.messages[AdvancedAFK.ACTION_MOVE]);
 					}
 				}
-			}
-			
-			//If loggedLocations is higher then MAX_LOGGED_LOCATIONS delete first
-			if(lastLocations.get(e.getPlayer()).size() > AdvancedAFK.MAX_LOGGED_LOCATIONS){
-				lastLocations.get(e.getPlayer()).remove(0);
 			}
 		}
 
@@ -216,16 +161,6 @@ public class Event_Listener implements Listener{
 	@EventHandler
 	public void onPlayerChat(AsyncPlayerChatEvent e){
 		logAction(e.getPlayer(),AdvancedAFK.ACTION_CHAT);		
-	}
-	
-	@EventHandler
-	public void onInventoryOpen(InventoryOpenEvent e){
-		AdvancedAFK.plugin.setPlayerInInv((Player)e.getPlayer(),true);
-	}
-	
-	@EventHandler
-	public void onInventoryClose(InventoryCloseEvent e){
-		AdvancedAFK.plugin.setPlayerInInv((Player)e.getPlayer(),false);
 	}
 	
 	@EventHandler

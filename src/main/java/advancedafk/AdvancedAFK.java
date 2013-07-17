@@ -1,13 +1,9 @@
 package advancedafk;
 
-import java.util.ArrayList;
-import java.util.List;
-
 import net.milkbowl.vault.permission.Permission;
 
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
-import org.bukkit.Location;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
@@ -83,14 +79,8 @@ public class AdvancedAFK extends JavaPlugin{
 	//End of Config Entries
 	
 
-	public AFK_API functions = new AFK_API(this);
+	public AFK_API functions = new AFK_API();
 	public Event_Listener pListener = new Event_Listener(functions);
-	
-	//A list which stores if a player is afk atm
-	public List<Player> isAFK = new ArrayList<Player>();
-	
-	//A list which stores if a player is in Inventory
-	public List<Player> inInventory = new ArrayList<Player>();
 	
 	//The plugin "onEnable" method, which is called when plugin loads
 	@Override
@@ -111,23 +101,12 @@ public class AdvancedAFK extends JavaPlugin{
 	 }
     
     public static void handleLogin(Player p) {
-        //If player joining the server set default entries and add Lists to Maps
+        //If player joining the server set default entries
         //If you do not do this, you will get null-pointer or it just won't work
-        AFK_Watcher.time.put(p, 0);
-        Event_Listener.lastLocations.put(p,new ArrayList<Location>());
-        Event_Listener.stepCounts.put(p,0);
-        Event_Listener.lastAction.put(p,0);
-        Event_Listener.actionCounts.put(p,0);
-        Event_Listener.lastLocation.put(p,p.getLocation());
+        PlayerData data = new PlayerData(p);
+        data.setLastLocation(p.getLocation());
+        Event_Listener.playerData.put(p, data);
     }
-	
-	public void setPlayerInInv(Player p, boolean b){
-		if(b && !inInventory.contains(p)){
-			inInventory.add(p);
-		}else if(inInventory.contains(p)){
-			inInventory.remove(p);
-		}
-	}
 	
 	public void loadPluginConnection(){
 		//Try to hook vault
@@ -146,10 +125,8 @@ public class AdvancedAFK extends JavaPlugin{
 		        
 		//Lets look if AFK-Terminator is installed
 		if (getServer().getPluginManager().isPluginEnabled("afkTerminator")){
-			useAFKTerminator = true;
 			log("AfkTerminator detected, hooked.");
 		}else{
-			useAFKTerminator = false;
 			log("AfkTerminator not detected, AFKMachine detection disabled.");
 		}
 	}
@@ -216,8 +193,6 @@ public class AdvancedAFK extends JavaPlugin{
 		 //Start AFK Watcher which adds +1 to afk-time every tick
 		 //Read AFK_Watcher comments
 		 Bukkit.getServer().getScheduler().runTaskLater(plugin, new AFK_Watcher(functions), 1);
-		 
-		 pListener.findAllPlayer();
 	}
 	
 	public static void log(String s){
@@ -228,7 +203,6 @@ public class AdvancedAFK extends JavaPlugin{
 	 public void onDisable(){
 		 //Cancel our AFK_Watcher
 		 Bukkit.getScheduler().cancelAllTasks();
-		 pListener.deleteAllConnections();
 	 }
 	 
 	 
@@ -264,11 +238,12 @@ public class AdvancedAFK extends JavaPlugin{
 					if(permissions.has(sender,"advancedafk.afk.other") || permissions.has(sender,"advancedafk.*")){
 						for(Player p : getServer().getOnlinePlayers()){
 							if(p.getName().contains(args[0]) || p.getDisplayName().contains(args[0])){
-								if(AFK_API.isAfk(p)){
+                                PlayerData data = Event_Listener.playerData.get(player);
+								if(data.isAfk()){
 									player.sendMessage(ChatColor.RED + p.getDisplayName() + " is already set to AFK.");
 							 	}else{
 							 		if(!permissions.has(sender,"advancedafk.exempt.afk") || !permissions.has(sender,"advancedafk.*")){
-							 			functions.setAfk(p, true);
+							 			functions.setAfk(data, true);
 							 			player.sendMessage(ChatColor.YELLOW + p.getDisplayName() + ChatColor.GREEN + " set to AFK");
 							 		}else{
 							 			player.sendMessage(ChatColor.YELLOW + p.getDisplayName() + ChatColor.RED + "Is exempt from SimpleAFK");
@@ -285,10 +260,11 @@ public class AdvancedAFK extends JavaPlugin{
 					//He wants to set himself to afk
 					if(!permissions.has(sender,"advancedafk.exempt.afk") || !permissions.has(sender,"advancedafk.*")){
 						if(permissions.has(sender,"advancedafk.afk.self") || permissions.has(sender,"advancedafk.*")){
-							if(AFK_API.isAfk(player)){
+                            PlayerData data = Event_Listener.playerData.get(player);
+							if(data.isAfk()){
 								player.sendMessage(ChatColor.RED + "You are already set to AFK.");
 							}else{
-								functions.setAfk(player, true);
+								functions.setAfk(data, true);
 							}
 						}else{
 							player.sendMessage(ChatColor.RED + "You don't have permission to do this.");
