@@ -1,6 +1,6 @@
-name: Advanced AFK
+name: AdvancedAFK
 main: advancedafk.AdvancedAFK
-version: 1.5
+version: ${project.version}
 dev-url: http://http://dev.bukkit.org/server-mods/advanced-afk/
 description: Advanced AFK System with AFKTerminator
 commands:

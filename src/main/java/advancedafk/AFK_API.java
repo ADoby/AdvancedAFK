@@ -1,12 +1,11 @@
 package advancedafk;
 
+import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 //import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.entity.Player;
 
 public class AFK_API {
-	
-	public AdvancedAFK owner;
 	
 	//Two variables which store the Strings of config entries which have to been checked
 	//if they are correct format
@@ -28,22 +27,17 @@ public class AFK_API {
 	String[] isBool = {"Afk.Enabled",
 			"Kick.Enabled"};
 	
-	public AFK_API(AdvancedAFK owner){
-		this.owner = owner;
-	}
-	
 	//This method sets/unsets a player to afk
-	public void setAfk(Player player, boolean set){
+	public void setAfk(PlayerData data, boolean set){
+	    data.setAfk(set);
 		if(set){
-			owner.isAFK.add(player);
-			AFK_Watcher.time.put(player, AdvancedAFK.MAX_AFK_TIME_MESSAGE * 20);
+			data.setTime(AdvancedAFK.MAX_AFK_TIME_MESSAGE * 20);
 			if(AdvancedAFK.plugin.getConfig().getBoolean("Afk.ENABLE_MESSAGE")){
-				player.getServer().broadcastMessage(ChatColor.translateAlternateColorCodes('&', AdvancedAFK.plugin.getConfig().getString("Afk.IsAfk").replace("%PLAYERNAME%", player.getName()).replace("%PLAYERDISP%", player.getDisplayName())));
+				Bukkit.getServer().broadcastMessage(ChatColor.translateAlternateColorCodes('&', AdvancedAFK.plugin.getConfig().getString("Afk.IsAfk").replace("%PLAYERNAME%", data.getPlayer().getName()).replace("%PLAYERDISP%", data.getPlayer().getDisplayName())));
 			}
 		}else{
-			owner.isAFK.remove(player);
 			if(AdvancedAFK.plugin.getConfig().getBoolean("Afk.ENABLE_MESSAGE")){
-				player.getServer().broadcastMessage(ChatColor.translateAlternateColorCodes('&', AdvancedAFK.plugin.getConfig().getString("Afk.NoLongerAfk").replace("%PLAYERNAME%", player.getName()).replace("%PLAYERDISP%", player.getDisplayName())));
+			    Bukkit.getServer().broadcastMessage(ChatColor.translateAlternateColorCodes('&', AdvancedAFK.plugin.getConfig().getString("Afk.NoLongerAfk").replace("%PLAYERNAME%", data.getPlayer().getName()).replace("%PLAYERDISP%", data.getPlayer().getDisplayName())));
 			}
 		}
 	}
@@ -86,24 +80,8 @@ public class AFK_API {
 	//Kicks the player and resets his loggs etc.
 	public void kick(Player p){
 		p.kickPlayer(ChatColor.translateAlternateColorCodes('&', AdvancedAFK.plugin.getConfig().getString("Kick.KickReason").replace("%PLAYERNAME%", p.getName()).replace("%PLAYERDISP%", p.getDisplayName())));
-		owner.isAFK.remove(p);
-		AFK_Watcher.time.remove(p);
 		if(AdvancedAFK.plugin.getConfig().getBoolean("Afk.ENABLE_MESSAGE")){
-			p.getServer().broadcastMessage(ChatColor.translateAlternateColorCodes('&', AdvancedAFK.plugin.getConfig().getString("Kick.KickReason").replace("%PLAYERNAME%", p.getName()).replace("%PLAYERDISP%", p.getDisplayName())));
-		}
-	}
-	
-	//Returns if a player is in a inventory atm
-	public static boolean isInInventory(Player p){
-		return AdvancedAFK.plugin.inInventory.contains(p);
-	}
-	
-	//Returns if a player is afk atm
-	public static boolean isAfk(Player p){
-		if(AdvancedAFK.plugin.isAFK.contains(p)){
-			return true;
-		}else{
-			return false;
+			Bukkit.getServer().broadcastMessage(ChatColor.translateAlternateColorCodes('&', AdvancedAFK.plugin.getConfig().getString("Kick.KickReason").replace("%PLAYERNAME%", p.getName()).replace("%PLAYERDISP%", p.getDisplayName())));
 		}
 	}
      
